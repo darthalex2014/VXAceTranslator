@@ -370,19 +370,44 @@ class RVData2Decompiler
 
   # 2D Array, every row have [id, script name, zlib compressed text]
   def decompile_scripts
-    @rvdata2_data.each_with_index do |script, i|
-      script[1] = script[1].gsub(/[<>:"\\|?*]/, '')
-      script_path = join(@output_path, 'Scripts', File.dirname(script[1]))
+    scripts_dir = join(@output_path, 'Scripts')
+    FileUtils.mkdir_p(scripts_dir) unless Dir.exist?(scripts_dir)
 
-      FileUtils.mkdir_p(script_path) unless Dir.exist?(script_path)
+    # Файл для хранения оригинальных имен
+    index_file_path = join(scripts_dir, 'Scripts_Info.txt')
+    
+    File.open(index_file_path, 'w:UTF-8') do |info_file|
+      @rvdata2_data.each_with_index do |script, i|
+        original_name = script[1]
+        
+        # 1. Записываем оригинальное имя в info файл (ID ||| Name)
+        info_file.write("#{i}|||#{original_name}\n")
 
-      script_filename = "#{i} - #{File.basename(script[1])}.rb"
-      File.open(join(script_path, script_filename), 'wb') do |script_file|
-        script_file.write(Zlib::Inflate.inflate(script[2]))
+        # 2. Создаем безопасный путь для Windows
+        parts = original_name.split(/[\\\/]/)
+        
+        # Очищаем каждую часть пути от запрещенных символов и пробелов по краям
+        clean_parts = parts.map do |part| 
+          part.gsub(/[<>:"\\|?*]/, '_').strip
+        end
+        
+        # Собираем безопасный путь
+        safe_relative_path = clean_parts.join('/')
+        safe_relative_path = "Untitled" if safe_relative_path.empty?
+
+        # Формируем полный путь
+        script_path = join(scripts_dir, File.dirname(safe_relative_path))
+        FileUtils.mkdir_p(script_path) unless Dir.exist?(script_path)
+
+        # Сохраняем сам скрипт
+        base_filename = File.basename(safe_relative_path)
+        script_filename = "#{i} - #{base_filename}.rb"
+        
+        File.open(join(script_path, script_filename), 'wb') do |script_file|
+          script_file.write(Zlib::Inflate.inflate(script[2]))
+        end
       end
-
     end
-
   end
 
   # Array of RPG::Skill class instances
