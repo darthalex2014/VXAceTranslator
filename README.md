@@ -1,90 +1,93 @@
-# Description
-Efficient translator for RPG Maker VX Ace games, fully written in Ruby, that can decompile/compile all text-related .rvdata2 files to a readable text files and vice-versa.
+# 🇺🇸 [English](README.md) | 🇷🇺 [Русский](README_RU.md) | 🇨🇳 [简体中文](README_CN.md) | 🇯🇵 [日本語](README_JP.md)
 
-If you love the project, any support from you will help to keep the project alive, you can support me on Paypal from here: https://paypal.me/AhmedAhmedEG?country.x=EG&locale.x=en_US
+# VXAceTranslator (2026 Update)
 
-# Features
-- Automatic decryption for rgss3a files if no "Data" folder is found in the game's directory.
-- Full support for modifying scripts, from adding, removing and even positionaly inserting them.
-- Infinite depth serialization and deserialization of all parameter types in common events.
-- User-friendly textual representation of all parameter types in common events.
-- Fast decompling/compiling speed.
-- Highly organized output format and file structure.
-- Filtering to specifically target file(s) for decompiling/compiling.
-- Full support for all event command types.
-- Two modes for decompiling/compiling of event commands: indexless and indexing modes.
-- Small file output size, consists of text files and Ruby scripts only.
-- Error handling for out-of-bound pages, common events, and event commands, including indentation.
-- Beautiful and informative terminal outputs.
+**Efficient translator for RPG Maker VX Ace games.**  
+Fully written in Ruby. Can decompile/compile all text-related `.rvdata2` files to readable text files and vice-versa.
 
-# How to Use
-Call the VXAceTranslator.exe file with the following arguments:-
+> **Update 2026:** The project has been revived with "Smart Mode", fixed script naming issues, and updated tools!
 
-```Decompiler Usage: VXAceTranslator.exe -d "GAME_DIR" -o "OUTPUT_DIR" [Optional]```
+# New Features (2026)
+- **🚀 Smart Mode (Drag & Drop):** No command line needed! Just place the `.exe` in the game folder and run it.
+  - If no `Decompiled` folder exists -> It automatically decrypts (if needed) and **Decompiles**.
+  - If `Decompiled` folder exists -> It **Compiles** changes back to game Data.
+- **🛡️ Script Name Preservation:** Fixed issues with special characters (like `◢`, `★`, spaces) in script names. Files are saved with safe names, but the original names are restored perfectly upon compilation using `Scripts_Info.txt`.
+- **🔓 Updated Decrypter:** Now uses **RPGMakerDecrypter-cli v3.0.4** (previously v2.0.0) for better compatibility with encrypted archives (`.rgss3a`).
 
-```Compiler Usage: VXAceTranslator.exe -c "GAME_DIR" -i "INPUT_DIR" [Optional] -o "OUTPUT_DIR" [Optional]```
+# Key Features
+- **Automatic Decryption:** Automatically handles `Game.rgss3a` if the "Data" folder is missing.
+- **Mod Friendly:** Full support for adding/removing scripts and positional insertion.
+- **Safe Editing:** Infinite depth serialization for common events parameter.
+- **Performance:** Fast decompiling/compiling speed.
+- **Clean Output:** Highly organized structure (Text files + Ruby scripts).
+- **Indexless & Indexing Modes:** Choose between freedom of editing or strict compatibility.
 
-Optional Arguments:
-- -t TARGET_FILENAME: Specifies a target filename to decompile/compile specific files. Only files with the given target filename included in their base name will be processed.
-- --force-decrypt: Forces the translator to decrypt the game and extract raw data files, even if the game is already decrypted.
-- --switch-indexless: Enables indexing mode (Explained below).
+---
 
-> **_NOTE:_** It is crucial to consistently enclose paths within double quotes when entering them in a terminal, as not doing so can lead to misleading errors if the path contains any spaces.
+# How to Use (Smart Mode)
 
-# Examples
-Example 1 - Decompiling/Compiling all supported rvdata2 files.:-
+This is the recommended way to use the tool.
 
-```Decompiling: VXAceTranslator.exe -d "path/to/game"```
-  
-```Compiling: VXAceTranslator.exe -c "path/to/game"```<br/><br/>
+1. **Prepare:** Copy `VXAceTranslator.exe` and the `Resources` folder into the game directory (where `Game.exe` is).
+2. **Decompile:** Run `VXAceTranslator.exe`.
+   - It will unpack the game and create a `Decompiled` folder.
+   - *Note:* Scripts will be inside `Decompiled/Scripts`. Don't worry if filenames look simplified; the real names are safely stored in `Scripts_Info.txt`.
+3. **Translate:** Edit the `.txt` and `.rb` files in the `Decompiled` folder.
+4. **Compile:** Run `VXAceTranslator.exe` again.
+   - It detects the `Decompiled` folder and builds a new `Compiled/Data` folder.
+5. **Finish:** Copy the contents of `Compiled/Data` into the game's `Data` folder to apply translation.
 
-Example 2 - Decompiling/Compiling rvdata2 files that start with the word "Map" in their name.:-
+---
 
-```Decompiling: VXAceTranslator.exe -d "path/to/game" -t Map```
-  
-```Compiling: VXAceTranslator.exe -c "path/to/game" -t Map```<br/><br/>
+# How to Use (Command Line)
 
-Example 3 - Decompiling/Compiling Map001.rvdata2 file only.:-
+For advanced users or automation scripts.
 
-```Decompiling: VXAceTranslator.exe -d "path/to/game" -t Map001```
-  
-```Compiling: VXAceTranslator.exe -c "path/to/game" -t Map001```
+**Decompiler:**
+```cmd
+VXAceTranslator.exe -d "GAME_DIR" -o "OUTPUT_DIR" [Optional]
+```
 
-# How to Correctly Insert Scripts
-Incase you want to insert new scripts without having to manually renumber all the scripts following it, there's a featured special syntax that makes it easy to achive this, normally a script will be named in this format:-
+**Compiler:**
+```cmd
+VXAceTranslator.exe -c "GAME_DIR" -i "INPUT_DIR" [Optional] -o "OUTPUT_DIR" [Optional]
+```
 
-`Index - ScriptName.rb`
+**Optional Arguments:**
+- `-t TARGET_FILENAME`: Process specific files only (e.g., `-t Map001`).
+- `--force-decrypt`: Force decryption even if Data folder exists.
+- `--switch-indexless`: Switch to indexing mode (for strict compatibility).
 
-To insert a new script after a spacific script, you have to rename your new script to be like this:-
+---
 
-`index+1 - NewScriptName.rb`
+# How to Build (For Developers)
 
-This will insert the new scrip after that `Index` by 1, you can surly use any other numbers other than 1 to place it even further.
+If you want to modify the source code and build your own `.exe`.
+
+### 1. Requirements
+Download **Ruby 2.7.8 (Portable)**. Do not use newer versions as they break marshal format compatibility with RPG Maker VX Ace.
+- **Download Link:** [RubyInstaller-2.7.8-1-x64.7z](https://github.com/oneclick/rubyinstaller2/releases/download/RubyInstaller-2.7.8-1/rubyinstaller-2.7.8-1-x64.7z)
+
+### 2. Setup
+Extract the downloaded archive into the project root directory. The build script is smart and supports any of these folder names:
+- `ruby` (Recommended)
+- `rubyinstaller-2.7.8-1-x64`
+- `rubyinstaller-2.7.8-1-x64\rubyinstaller-2.7.8-1-x64` (If you extracted it too deep)
+
+### 3. Build
+Simply run **`MakeExe.bat`**.
+It will detect your Ruby installation, compile the gems, and produce `VXAceTranslator.exe`.
+
+> **Note:** The build process uses a portable version of Ocra included in the `Modules` folder to avoid gem dependency hell.
+
+---
+
+# Script Insertion Syntax
+To insert a new script without renumbering everything:
+1. Name your file: `Index+1 - ScriptName.rb`
+2. Example: To insert after script 10, name it `10+1 - MyNewScript.rb`.
 
 # Indexless vs Indexing Mode
-Those are modes specify how to read and write event commands in CommonEvents.rvdata2, Maps.rvdata2 and Troops.rvdata2.
-
-In indexless mode, event commands are compiled from the ground up based on what's written by the user, in the order the user written them in, any removed event commands will be discarded in compilation, this gives more freedom, but can destroy future compatibility in case the game got an update.
-
-In indexing mode, event commands are written proceeded by it's index in the list of it's corresponding common event, original event commands in the game's files will be patched by the new values, which the user written in it's corresponding index, this applies for the event type and parameters too, removing any event command or changing it's order will have no effect in the game, gives less freedom, but assures future compatibility, it supports adding new event commands with simple syntax.
-
-# How to Add Event Commands in Indexing Mode
-The decompiler format for event comments in indexing mode is as follows:-
-
-`Index-CommandEventName([Parameters])`
-
-To manually add an event command, you have write them in the same way, but at the end of the line, you will add a plus sign, like this:-
-
-`Index-CommandEventName([Parameters])+`
-
-Surly the indentation level you will add behind the event command will be accounted for.
-This will make the compiler insert that command in the index you have written, also you don't have to account for the future indexes of the event commands that follows the one you are adding, this will be automatically handled by the compiler.
-
-# How to Build
-1- Make sure you have Ruby v2.7.8, any version higher than that have a different format for marshaled files, and it's not compatible with the engine.
-
-2- Make sure RubyGems is not installed at all, as it causes crashes with executables generated by Ocra library, a version of Ocra ripped from the official gem is included in the project.
-
-3- Simply run Build.rb and done.
-
-> **_NOTE:_** As the newest version of RubyGems causes crashes with executables generated by Ocra library, and the source code in the official Ocra GitHub is outdated, and the updated working code is available only in the gem version of Ocra, I installed Ocra gem, copied Ocra folder from RubyGems directory, reinstalled Ruby, and used the copied Ocra library manually, and it worked perfectly.
+- **Indexless (Default):** Reconstructs events from scratch. Good for heavy editing.
+- **Indexing:** Patches original events by ID. Good for compatibility if you only change text.
+```
