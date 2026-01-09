@@ -707,70 +707,82 @@ class RVData2Compiler
   end
 
   def compile_scripts
-    return false unless Dir.exist?(join(@input_path, 'Scripts'))
+    scripts_dir = join(@input_path, 'Scripts')
+    return false unless Dir.exist?(scripts_dir)
 
     additional_scripts = {}
     base_scripts = {}
+    
+    # Загружаем оригинальные имена, если файл существует
+    original_names = {}
+    info_file_path = join(scripts_dir, 'Scripts_Info.txt')
+    if File.exist?(info_file_path)
+      File.readlines(info_file_path, encoding: 'UTF-8').each do |line|
+        if line =~ /^(\d+)\|\|\|(.*)$/m 
+          original_names[$1.to_i] = $2.chomp
+        end
+      end
+    end
 
     @rvdata2_data.clear
-    puts "Input glob: " + "#{join(@input_path, 'Scripts', '**', '*')}.rb" if $test
-    Dir.glob("#{join(@input_path, 'Scripts', '**', '*')}.rb") do |script_path|
+    puts "Input glob: " + "#{join(scripts_dir, '**', '*')}.rb" if $test
+    
+    Dir.glob("#{join(scripts_dir, '**', '*')}.rb") do |script_path|
       puts  "Script path: " + script_path if $test
 
-      script_relative_path = Pathname(script_path).relative_path_from(join(@input_path, 'Scripts'))
-      puts "Script filename: " + File.basename(script_path) if $test
+      script_relative_path = Pathname(script_path).relative_path_from(scripts_dir)
+      filename = File.basename(script_path)
 
-      case File.basename(script_path)
+      case filename
       when /^(\d+) - (.*).rb/
-        script_relative_path = script_relative_path.dirname.to_s == '.'? $2.to_s : join(script_relative_path.dirname.to_s, $2.to_s)
+        id = $1.to_i
+        
+        # Берем имя из Info файла, если есть
+        if original_names.key?(id)
+          final_name = original_names[id]
+        else
+          # Если скрипт новый, формируем имя из папок
+          final_name = script_relative_path.dirname.to_s == '.' ? $2.to_s : join(script_relative_path.dirname.to_s, $2.to_s)
+        end
 
-        File.open(script_path) do |script_file|
-          puts script_file.size if $test
-          base_scripts[$1.to_i] = [0, script_relative_path, Zlib::Deflate.deflate(script_file.read)]
+        File.open(script_path, 'rb') do |script_file|
+          base_scripts[id] = [0, final_name, Zlib::Deflate.deflate(script_file.read)]
         end
 
       when /^(\d+)\+(\d+) - (.*).rb/
-        script_relative_path = script_relative_path.dirname.to_s == '.'? $3.to_s : join(script_relative_path.dirname.to_s, $3.to_s)
+        base_id = $1.to_i
+        offset = $2.to_i
+        
+        final_name = script_relative_path.dirname.to_s == '.' ? $3.to_s : join(script_relative_path.dirname.to_s, $3.to_s)
 
-        File.open(script_path) do |script_file|
-          puts script_file.size if $test
-
-          unless additional_scripts.include?($1.to_i)
-            additional_scripts[$1.to_i] = {}
+        File.open(script_path, 'rb') do |script_file|
+          unless additional_scripts.include?(base_id)
+            additional_scripts[base_id] = {}
           end
-
-          additional_scripts[$1.to_i][$2.to_i] = [0, script_relative_path, Zlib::Deflate.deflate(script_file.read)]
+          additional_scripts[base_id][offset] = [0, final_name, Zlib::Deflate.deflate(script_file.read)]
         end
 
       else
         next
-
       end
-
     end
 
+    # Сборка массива
     base_scripts.keys.sort.each do |ind|
       @rvdata2_data.append(base_scripts[ind])
     end
 
     additional_scripts.keys.sort.reverse.each do |script_ind|
-
       additional_scripts[script_ind].keys.sort.each do |ind|
-
         if ind >= @rvdata2_data.length
           @rvdata2_data.append(additional_scripts[script_ind][ind])
-
         else
           @rvdata2_data.insert(script_ind + ind, additional_scripts[script_ind][ind])
-
         end
-
       end
-
     end
 
     true
-
   end
 
   def compile_skills
