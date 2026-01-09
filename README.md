@@ -90,4 +90,3 @@ To insert a new script without renumbering everything:
 # Indexless vs Indexing Mode
 - **Indexless (Default):** Reconstructs events from scratch. Good for heavy editing.
 - **Indexing:** Patches original events by ID. Good for compatibility if you only change text.
-```
